@@ -1,0 +1,204 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Fruit of Life — SVG</title>
+<style>
+  body{margin:0;display:grid;place-items:center;height:100svh;background:#f7f4ef}
+</style>
+<div id="app"></div>
+<script>
+const CONFIG = {
+  mode: "userSpec",       // "userSpec" | "hexFull"
+  size: 900,              // canvas px
+  r: 36,                  // circle radius
+  stroke: 2.2,            // outline thickness
+  colors: {               // rainbow ring colors
+    center: "#E31B23",    // red
+    ring1:  "#F36F21",    // orange
+    ring2:  "#FFD21E",    // yellow
+    ring3:  "#3DBB5D",    // green
+    ring4:  "#1E88E5",    // blue
+    ring5:  "#3D3A98",    // indigo
+    halo:   "#7E57C2"     // violet
+  }
+};
+
+// --- helpers ---
+const TAU = Math.PI*2;
+const deg = d => d*Math.PI/180;
+
+function svgEl(tag, attrs){
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for(const k in attrs){ el.setAttribute(k, attrs[k]); }
+  return el;
+}
+
+function circle(cx, cy, r, color, strokeWidth){
+  return svgEl("circle", {
+    cx, cy, r,
+    fill:"none",
+    stroke: color,
+    "stroke-width": strokeWidth,
+    "vector-effect":"non-scaling-stroke"
+  });
+}
+
+function addRings_userSpec(cx, cy, r, stroke, colors){
+  const groups = [];
+  const ringColors = [colors.ring1, colors.ring2, colors.ring3, colors.ring4, colors.ring5];
+
+  // Scale factor to match the SVG coordinates (58.5 from the SVG)
+  const scale = 58.5;
+  
+  // Define the exact circle positions from the SVG
+  const circlePositions = [
+    // Center circle (index 0)
+    {x: 0, y: 0, ring: 0},
+    
+    // Vertical column (9 circles)
+    {x: 0, y: 1, ring: 1}, {x: 0, y: 2, ring: 1}, {x: 0, y: 3, ring: 1}, 
+    {x: 0, y: 4, ring: 1}, {x: 0, y: 5, ring: 1}, {x: 0, y: 6, ring: 1}, 
+    {x: 0, y: 7, ring: 1}, {x: 0, y: 8, ring: 1}, {x: 0, y: 9, ring: 1},
+    
+    // Right side circles
+    {x: 0.866025404, y: 1.5, ring: 2}, {x: 0.866025404, y: 2.5, ring: 2}, 
+    {x: 0.866025404, y: 3.5, ring: 2}, {x: 0.866025404, y: 4.5, ring: 2}, 
+    {x: 0.866025404, y: 5.5, ring: 2}, {x: 0.866025404, y: 6.5, ring: 2}, 
+    {x: 0.866025404, y: 7.5, ring: 2}, {x: 0.866025404, y: 8.5, ring: 2},
+    
+    {x: 1.732050808, y: 2, ring: 3}, {x: 1.732050808, y: 3, ring: 3}, 
+    {x: 1.732050808, y: 4, ring: 3}, {x: 1.732050808, y: 5, ring: 3}, 
+    {x: 1.732050808, y: 6, ring: 3}, {x: 1.732050808, y: 7, ring: 3}, 
+    {x: 1.732050808, y: 8, ring: 3},
+    
+    {x: 2.598076212, y: 2.5, ring: 4}, {x: 2.598076212, y: 3.5, ring: 4}, 
+    {x: 2.598076212, y: 4.5, ring: 4}, {x: 2.598076212, y: 5.5, ring: 4}, 
+    {x: 2.598076212, y: 6.5, ring: 4}, {x: 2.598076212, y: 7.5, ring: 4},
+    
+    {x: 3.464101616, y: 3, ring: 5}, {x: 3.464101616, y: 4, ring: 5}, 
+    {x: 3.464101616, y: 5, ring: 5}, {x: 3.464101616, y: 6, ring: 5}, 
+    {x: 3.464101616, y: 7, ring: 5},
+    
+    // Left side circles (mirror of right side)
+    {x: -0.866025404, y: 1.5, ring: 2}, {x: -0.866025404, y: 2.5, ring: 2}, 
+    {x: -0.866025404, y: 3.5, ring: 2}, {x: -0.866025404, y: 4.5, ring: 2}, 
+    {x: -0.866025404, y: 5.5, ring: 2}, {x: -0.866025404, y: 6.5, ring: 2}, 
+    {x: -0.866025404, y: 7.5, ring: 2}, {x: -0.866025404, y: 8.5, ring: 2},
+    
+    {x: -1.732050808, y: 2, ring: 3}, {x: -1.732050808, y: 3, ring: 3}, 
+    {x: -1.732050808, y: 4, ring: 3}, {x: -1.732050808, y: 5, ring: 3}, 
+    {x: -1.732050808, y: 6, ring: 3}, {x: -1.732050808, y: 7, ring: 3}, 
+    {x: -1.732050808, y: 8, ring: 3},
+    
+    {x: -2.598076212, y: 2.5, ring: 4}, {x: -2.598076212, y: 3.5, ring: 4}, 
+    {x: -2.598076212, y: 4.5, ring: 4}, {x: -2.598076212, y: 5.5, ring: 4}, 
+    {x: -2.598076212, y: 6.5, ring: 4}, {x: -2.598076212, y: 7.5, ring: 4},
+    
+    {x: -3.464101616, y: 3, ring: 5}, {x: -3.464101616, y: 4, ring: 5}, 
+    {x: -3.464101616, y: 5, ring: 5}, {x: -3.464101616, y: 6, ring: 5}, 
+    {x: -3.464101616, y: 7, ring: 5}
+  ];
+
+  // Create groups for each ring
+  const ringGroups = {};
+  for(let i = 0; i <= 5; i++) {
+    ringGroups[i] = svgEl("g", {});
+  }
+
+  // Add circles to appropriate groups
+  circlePositions.forEach((pos, index) => {
+    const px = cx + (pos.x * r * scale / 58.5);
+    const py = cy + (pos.y * r * scale / 58.5);
+    
+    let color;
+    if (pos.ring === 0) {
+      color = colors.center;
+    } else if (pos.ring <= 5) {
+      color = ringColors[pos.ring - 1];
+    } else {
+      color = colors.halo;
+    }
+    
+    ringGroups[pos.ring].appendChild(circle(px, py, r, color, stroke));
+  });
+
+  // Add all groups to the main groups array (skip first group - ring 0)
+  for(let i = 1; i <= 5; i++) {
+    if (ringGroups[i].children.length > 0) {
+      groups.push(ringGroups[i]);
+    }
+  }
+
+  return groups;
+}
+
+function addRings_hexFull(cx, cy, r, stroke, colors){
+  // classic hex-lattice: each ring positioned at intersections of previous ring
+  const groups = [];
+  groups.push(circle(cx, cy, r, colors.center, stroke));
+
+  // Ring 1: 6 circles around center (hex pattern)
+  {
+    const g = svgEl("g", {});
+    const distance = 2 * r; // Distance between centers = 2r
+    for(let k=0;k<6;k++){
+      const a = deg(90) + k*deg(60); // 60 degrees apart
+      const px = cx + distance*Math.cos(a);
+      const py = cy + distance*Math.sin(a);
+      g.appendChild(circle(px, py, r, colors.ring1, stroke));
+    }
+    groups.push(g);
+  }
+
+  // Ring 2: 12 circles at intersections of ring 1 circles
+  {
+    const g = svgEl("g", {});
+    const distance = 2 * r * Math.sqrt(3); // Distance to ring 2
+    for(let k=0;k<12;k++){
+      const a = deg(90) + k*deg(30); // 30 degrees apart
+      const px = cx + distance*Math.cos(a);
+      const py = cy + distance*Math.sin(a);
+      g.appendChild(circle(px, py, r, colors.ring2, stroke));
+    }
+    groups.push(g);
+  }
+
+  // Ring 3: 18 circles at intersections of ring 2 circles
+  {
+    const g = svgEl("g", {});
+    const distance = 4 * r; // Distance to ring 3
+    for(let k=0;k<18;k++){
+      const a = deg(90) + k*deg(20); // 20 degrees apart
+      const px = cx + distance*Math.cos(a);
+      const py = cy + distance*Math.sin(a);
+      g.appendChild(circle(px, py, r, colors.ring3, stroke));
+    }
+    groups.push(g);
+  }
+
+  // Ring 4: 24 circles at intersections of ring 3 circles
+  {
+    const g = svgEl("g", {});
+    const distance = 2 * r * Math.sqrt(7); // Distance to ring 4
+    for(let k=0;k<24;k++){
+      const a = deg(90) + k*deg(15); // 15 degrees apart
+      const px = cx + distance*Math.cos(a);
+      const py = cy + distance*Math.sin(a);
+      g.appendChild(circle(px, py, r, colors.ring4, stroke));
+    }
+    groups.push(g);
+  }
+
+  return groups;
+}
+
+// --- build SVG ---
+const W = CONFIG.size, H = CONFIG.size, cx = W/2, cy = H/2;
+const svg = svgEl("svg", {viewBox:`0 0 ${W} ${H}`, width:W, height:H});
+
+const groups = (CONFIG.mode === "hexFull")
+  ? addRings_hexFull(cx, cy, CONFIG.r, CONFIG.stroke, CONFIG.colors)
+  : addRings_userSpec(cx, cy, CONFIG.r, CONFIG.stroke, CONFIG.colors);
+
+for(const g of groups) svg.appendChild(g);
+document.getElementById("app").appendChild(svg);
+</script>
