@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flower of Life — SVG</title>
-  <style>
+<title>Flower of Life — SVG</title>
+<style>
     body {
       margin: 0;
       display: grid;
@@ -58,30 +58,31 @@
     #scaleControl {
       width: 200px;
     }
-  </style>
+</style>
 </head>
 
 <body>
-  <div class="controls">
-    <h3>Ring Visibility Controls</h3>
+<div class="controls">
+  <h3>Ring Visibility Controls</h3>
     <div id="ringControls"></div>
-    <div class="control-group">
-      <button id="showAll">Show All</button>
-      <button id="hideAll">Hide All</button>
-    </div>
-    <div class="control-group">
-      <label>
+  <div class="control-group">
+      <button id="toggleAll">Toggle All</button>
+      <button id="exportSvg">Export SVG</button>
+      <button id="animateRings">Animate Rings</button>
+  </div>
+  <div class="control-group">
+    <label>
         <input type="checkbox" id="showVertices" checked>
         Show Vertices
-      </label>
-    </div>
-    <div class="control-group">
-      <label for="scaleControl">Scale: <span id="scaleValue">1.0</span></label>
+    </label>
+        </div>
+        <div class="control-group">
+          <label for="scaleControl">Scale: <span id="scaleValue">1.0</span></label>
       <input type="range" id="scaleControl" min="0.1" max="3.0" step="0.1" value="1.0">
-    </div>
-  </div>
+        </div>
+</div>
 
-  <div id="app"></div>
+<div id="app"></div>
 
 <script>
 // Live reload - refreshes page when file changes
@@ -166,9 +167,7 @@ function findCircleIntersections(x1, y1, r1, x2, y2, r2) {
   return [[x4, y4], [x5, y5]];
 }
 
-// ============================================================================
-// RING GENERATION FUNCTIONS
-// ============================================================================
+// Ring Generation Functions
 
 function genRing(ringIndex, cx, cy, r, stroke, color, referenceCircle, previousArc = null, globalUsedPositions = null, allRings = []) {
   const group = svgEl("g", {});
@@ -186,7 +185,7 @@ function genRing(ringIndex, cx, cy, r, stroke, color, referenceCircle, previousA
     group.appendChild(circle(cx, cy, r, "none", "black", baseOpacity));
     circles.push({x: cx, y: cy, r: r, id: "center"});
     usedPositions.add(`${cx.toFixed(3)},${cy.toFixed(3)}`);
-    vertices.push(circle(cx, cy, 3, "red", "red", 1));
+    vertices.push(circle(cx, cy, 3, "red", "red", isVisible ? 1 : 0));
     
   } else if (ringIndex === 1) {
     // Second ring: Start from topmost point of reference circle, then clockwise intersections
@@ -239,7 +238,7 @@ function genRing(ringIndex, cx, cy, r, stroke, color, referenceCircle, previousA
     // Add vertices ONLY at the center of circles that were actually drawn for this ring
     if (color && color !== "none") {
       for (const circleData of circles) {
-        vertices.push(circle(circleData.x, circleData.y, 3, color, color, 1)); // Start with opacity 1 (visible)
+        vertices.push(circle(circleData.x, circleData.y, 3, color, color, 1));
       }
     }
     
@@ -280,13 +279,11 @@ function genRing(ringIndex, cx, cy, r, stroke, color, referenceCircle, previousA
       usedPositions.add(key);
     }
     
-    // SECONDARY CHECK: Check if newly derived intersection points intersect with previous layer circles
-    // This creates additional circles and vertices for enhanced geometric complexity
-    // Only applies to Ring 4 and onwards
+    // Secondary check: Enhanced geometric complexity for Ring 4+
     if (ringIndex >= 4) {
       const secondaryIntersectionPoints = [];
       
-      // Check intersections between newly created circles and previous layer circles
+      // Check intersections between new and previous circles
       for (let i = 0; i < circles.length; i++) {
         for (let j = 0; j < circlesToCheck.length; j++) {
           const intersections = findCircleIntersections(
@@ -318,7 +315,7 @@ function genRing(ringIndex, cx, cy, r, stroke, color, referenceCircle, previousA
     // Add vertices ONLY at the center of circles that were actually drawn for this ring
     if (color && color !== "none") {
       for (const circleData of circles) {
-        vertices.push(circle(circleData.x, circleData.y, 3, color, color, 1)); // Start with opacity 1 (visible)
+        vertices.push(circle(circleData.x, circleData.y, 3, color, color, 1));
       }
     }
   }
@@ -381,9 +378,7 @@ function calculateOuterBoundaryArc(circles, referenceCircle) {
   };
 }
 
-// ============================================================================
-// MAIN FRUIT GENERATION
-// ============================================================================
+// Main Fruit Generation
 
 function genFruit(cx, cy, r, stroke, colors, svgElement = null) {
   const referenceCircle = {x: cx, y: cy, r: r};
@@ -395,7 +390,7 @@ function genFruit(cx, cy, r, stroke, colors, svgElement = null) {
   
   // Generate rings for each available color
   for(let ringIndex = 0; ringIndex < colors.length; ringIndex++) {
-    const color = colors[ringIndex]; // Each ring uses its corresponding color from the array
+    const color = colors[ringIndex];
     const { group, circles, arc, vertices } = genRing(ringIndex, cx, cy, r, stroke, color, referenceCircle, previousArc, globalUsedPositions, allRings);
     
     if (svgElement) {
@@ -410,7 +405,7 @@ function genFruit(cx, cy, r, stroke, colors, svgElement = null) {
     totalCircles += circles.length;
   }
   
-  // Create a separate vertex layer on top of all circles
+  // Create vertex layer on top
   if (svgElement && allVertices.length > 0) {
     const vertexGroup = svgEl("g", { id: "vertex-layer" });
     for (const vertex of allVertices) {
@@ -422,15 +417,13 @@ function genFruit(cx, cy, r, stroke, colors, svgElement = null) {
   return totalCircles;
 }
 
-// ============================================================================
-// INITIALIZATION & SETUP
-// ============================================================================
+// Initialization & Setup
 
 function generateRingControls() {
   const ringControls = document.getElementById('ringControls');
   ringControls.innerHTML = '';
   
-  // Add rings for each color - Ring 0 uses first color, Ring 1 uses second color, etc.
+  // Add rings for each color
   CONFIG.colors.forEach((color, index) => {
     const ringIndex = index;
     const ringLabels = ['Source', 'Seed(Heart)', 'Subconscious', 'Egg(Body)', 'Flower(Consciousness)', 'Soul', 'Fruit(Reality)'];
@@ -467,7 +460,7 @@ function initFlowerOfLife() {
 
 // Add a single ring incrementally
 function addRingIncremental(ringIndex, cx, cy, r, stroke, colors, referenceCircle, previousArc, svgElement, globalUsedPositions, allRings) {
-  const color = colors[ringIndex]; // Each ring uses its corresponding color from the array
+  const color = colors[ringIndex];
   const { group, circles, arc, vertices } = genRing(ringIndex, cx, cy, r, stroke, color, referenceCircle, previousArc, globalUsedPositions, allRings);
   
   svgElement.appendChild(group);
@@ -482,16 +475,14 @@ function addRingIncremental(ringIndex, cx, cy, r, stroke, colors, referenceCircl
       vertexGroup.appendChild(vertex);
     }
     
-    // Ensure vertex layer is always on top by moving it to the end
+    // Ensure vertex layer is on top
     svgElement.appendChild(vertexGroup);
   }
   
   return { group, circles, arc };
 }
 
-// ============================================================================
-// UI CONTROLS & INTERACTIONS
-// ============================================================================
+// UI Controls & Interactions
 
 function ensureVertexLayerOnTop() {
   const svg = document.querySelector('#app svg');
@@ -509,7 +500,6 @@ function updateVertexVisibility() {
   const svg = document.querySelector('#app svg');
   if (!svg || !showVerticesCheckbox) return;
   
-  // Ensure vertex layer is always on top
   ensureVertexLayerOnTop();
   
   const vertexGroup = svg.querySelector('#vertex-layer');
@@ -521,18 +511,22 @@ function updateVertexVisibility() {
       const fillColor = vertex.getAttribute('fill');
       let ringIndex = -1;
       
-      // Map colors to ring indices - each ring uses its corresponding color from the array
-      for (let i = 0; i < CONFIG.colors.length; i++) {
-        if (fillColor === CONFIG.colors[i]) {
-          ringIndex = i; // Ring i uses color i
-          break;
+      // Map colors to ring indices
+      if (fillColor === "red") {
+        ringIndex = 0;
+      } else {
+        for (let i = 0; i < CONFIG.colors.length; i++) {
+          if (fillColor === CONFIG.colors[i]) {
+            ringIndex = i;
+            break;
+          }
         }
       }
       
       if (ringIndex >= 0) {
         const ringCheckbox = document.getElementById(`ring${ringIndex}`);
         if (ringCheckbox) {
-          // Show vertex only if both "Show Vertices" and the ring checkbox are checked
+          // Show vertex if both controls are checked
           vertex.setAttribute('opacity', (showVertices && ringCheckbox.checked) ? 1 : 0);
         }
       }
@@ -547,7 +541,7 @@ function updateRingVisibility() {
   // Ensure vertex layer is on top
   ensureVertexLayerOnTop();
   
-  // Control ring groups visibility (exclude vertex layer)
+  // Control ring groups visibility
   const ringGroups = svg.querySelectorAll('g:not(#vertex-layer)');
   ringGroups.forEach((group, index) => {
     const checkbox = document.getElementById(`ring${index}`);
@@ -556,7 +550,7 @@ function updateRingVisibility() {
     }
   });
   
-  // Update vertex visibility when ring visibility changes
+  // Update vertex visibility
   updateVertexVisibility();
 }
 
@@ -587,7 +581,7 @@ function addRingsIncrementally() {
   let previousArc = null;
   const globalUsedPositions = new Set();
   const allRings = [];
-  const totalRings = CONFIG.colors.length - 1; // Iterate up to colors.length - 1
+  const totalRings = CONFIG.colors.length - 1;
   
   for(let ringIndex = 0; ringIndex <= totalRings; ringIndex++) {
     setTimeout(() => {
@@ -600,14 +594,14 @@ function addRingsIncrementally() {
         result.group.setAttribute('opacity', checkbox.checked ? 1 : 0);
       }
       
-      // Update vertex visibility for all vertices
+      // Update vertex visibility
       updateVertexVisibility();
     }, ringIndex * 500);
   }
 }
 
 function setupEventListeners() {
-  const totalRings = CONFIG.colors.length - 1; // Iterate up to colors.length - 1
+  const totalRings = CONFIG.colors.length - 1;
   
   // Show Vertices checkbox
   const showVerticesCheckbox = document.getElementById('showVertices');
@@ -623,38 +617,128 @@ function setupEventListeners() {
     }
   }
 
-  // Show All button
-  document.getElementById('showAll').addEventListener('click', () => {
+  // Toggle All button
+  document.getElementById('toggleAll').addEventListener('click', () => {
+    // Check if any rings are visible
+    let anyVisible = false;
     for(let i = 0; i <= totalRings; i++) {
       const checkbox = document.getElementById(`ring${i}`);
-      if(checkbox) checkbox.checked = true;
+      if(checkbox && checkbox.checked) {
+        anyVisible = true;
+        break;
+      }
     }
-    updateRingVisibility();
-  });
-
-  // Hide All button
-  document.getElementById('hideAll').addEventListener('click', () => {
+    
+    // Toggle all rings
+    const newState = !anyVisible;
     for(let i = 0; i <= totalRings; i++) {
       const checkbox = document.getElementById(`ring${i}`);
-      if(checkbox) checkbox.checked = false;
+      if(checkbox) checkbox.checked = newState;
     }
     updateRingVisibility();
   });
   
-  // Add incremental animation button
-  const incrementalBtn = document.createElement('button');
-  incrementalBtn.textContent = 'Animate Rings';
-  incrementalBtn.style.marginTop = '10px';
-  incrementalBtn.addEventListener('click', addRingsIncrementally);
-  document.querySelector('.controls').appendChild(incrementalBtn);
+  // Animate Rings button
+  document.getElementById('animateRings').addEventListener('click', addRingsIncrementally);
   
   // Scale control
   const scaleControl = document.getElementById('scaleControl');
   if (scaleControl) {
     scaleControl.addEventListener('input', updateScale);
   }
+  
+  // Export SVG button
+  document.getElementById('exportSvg').addEventListener('click', exportToSVG);
 }
 
+
+function exportToSVG() {
+  const svg = document.querySelector('#app svg');
+  if (!svg) {
+    alert('No SVG found to export');
+    return;
+  }
+  
+  // Clone the SVG
+  const svgClone = svg.cloneNode(true);
+  
+  // Get the current scale
+  const scaleControl = document.getElementById('scaleControl');
+  const scale = scaleControl ? parseFloat(scaleControl.value) : 1.0;
+  
+  // Calculate bounds of visible content
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const circles = svgClone.querySelectorAll('circle');
+  
+  circles.forEach(circle => {
+    const cx = parseFloat(circle.getAttribute('cx'));
+    const cy = parseFloat(circle.getAttribute('cy'));
+    const r = parseFloat(circle.getAttribute('r'));
+    
+    // Only consider visible circles
+    const opacity = parseFloat(circle.getAttribute('opacity') || '1');
+    if (opacity > 0) {
+      minX = Math.min(minX, cx - r);
+      minY = Math.min(minY, cy - r);
+      maxX = Math.max(maxX, cx + r);
+      maxY = Math.max(maxY, cy + r);
+    }
+  });
+  
+  // Add padding around content
+  const padding = 20;
+  minX -= padding;
+  minY -= padding;
+  maxX += padding;
+  maxY += padding;
+  
+  // Calculate dimensions
+  const width = maxX - minX;
+  const height = maxY - minY;
+  
+  // Create scalable SVG
+  svgClone.setAttribute('width', '100%');
+  svgClone.setAttribute('height', '100%');
+  svgClone.setAttribute('viewBox', `${minX} ${minY} ${width} ${height}`);
+  svgClone.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  svgClone.setAttribute('fill', 'none');
+  svgClone.setAttribute('background', 'transparent');
+  
+  // Remove width/height from groups
+  const allGroups = svgClone.querySelectorAll('g');
+  allGroups.forEach(group => {
+    group.removeAttribute('width');
+    group.removeAttribute('height');
+  });
+  
+  // Ensure stroke widths are scalable
+  const allCircles = svgClone.querySelectorAll('circle');
+  allCircles.forEach(circle => {
+    const strokeWidth = parseFloat(circle.getAttribute('stroke-width') || '2');
+    // Use relative stroke width
+    circle.setAttribute('stroke-width', strokeWidth);
+    // Ensure stroke scales with element
+    circle.setAttribute('vector-effect', 'non-scaling-stroke');
+  });
+  
+  // Convert to string
+  const svgString = new XMLSerializer().serializeToString(svgClone);
+  
+  // Create and download file
+  const blob = new Blob([svgString], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `flower-of-life-${new Date().toISOString().slice(0, 10)}.svg`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  URL.revokeObjectURL(url);
+}
 
 function initializeApp() {
   try {
