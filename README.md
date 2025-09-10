@@ -30,12 +30,12 @@ An interactive web application that generates the sacred geometry pattern known 
 ## 🚀 Getting Started
 
 ### Live Demo
-Visit the [GitHub Pages deployment](https://yourusername.github.io/floweroflife) to try the application.
+Visit the [GitHub Pages deployment](https://hamecoded.github.io/floweroflife) to try the application.
 
 ### Local Development
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/floweroflife.git
+   git clone https://github.com/hamecoded/floweroflife.git
    cd floweroflife
    ```
 
