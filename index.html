@@ -85,30 +85,7 @@
   <div id="app"></div>
 
 <script>
-// Live reload - refreshes page when file changes
-setInterval(() => {
-  fetch(`/?t=${Date.now()}`)
-    .then(response => response.text())
-    .then(text => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, 'text/html');
-      const scripts = doc.querySelectorAll('script');
-      const currentScripts = document.querySelectorAll('script');
-      
-      if (scripts.length !== currentScripts.length) {
-        location.reload();
-        return;
-      }
-      
-      for (let i = 0; i < scripts.length; i++) {
-        if (scripts[i].textContent !== currentScripts[i].textContent) {
-          location.reload();
-          return;
-        }
-      }
-    })
-    .catch(() => {});
-}, 500);
+// Live reload removed for production deployment
 </script>
 
 <script>
